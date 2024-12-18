@@ -27,7 +27,7 @@ class FirecrawlApp:
         Parameters for the extract operation.
         """
         prompt: str
-        schema: Optional[Any] = None
+        schema_: Optional[Any] = pydantic.Field(None, alias='schema')
         system_prompt: Optional[str] = None
         allow_external_links: Optional[bool] = False
 
@@ -221,12 +221,12 @@ class FirecrawlApp:
                             if status_response.status_code != 200:
                                 logger.error(f"Failed to fetch next page: {status_response.status_code}")
                                 break
-                            status_data = status_response.json()
-                            data.extend(status_data.get('data', []))
+                            next_data = status_response.json()
+                            data.extend(next_data.get('data', []))
+                            status_data = next_data
                         except Exception as e:
                             logger.error(f"Error during pagination request: {e}")
                             break
-                        status_data.pop('next', None)
                     status_data['data'] = data
                     
             return {
@@ -430,12 +430,12 @@ class FirecrawlApp:
                             if status_response.status_code != 200:
                                 logger.error(f"Failed to fetch next page: {status_response.status_code}")
                                 break
-                            status_data = status_response.json()
-                            data.extend(status_data.get('data', []))
+                            next_data = status_response.json()
+                            data.extend(next_data.get('data', []))
+                            status_data = next_data
                         except Exception as e:
                             logger.error(f"Error during pagination request: {e}")
                             break
-                        status_data.pop('next', None)
                     status_data['data'] = data
 
             return {
@@ -629,7 +629,7 @@ class FirecrawlApp:
                         while 'next' in status_data:
                           status_response = self._get_request(status_data['next'], headers)
                           status_data = status_response.json()
-                          data.extend(status_data['data'])
+                          data.extend(status_data.get('data', []))
                         status_data['data'] = data
                         return status_data
                     else:
